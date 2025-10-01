@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hommahaltuu</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background: #2d6cdf; color: white; padding: 1rem; text-align: center; }
+    .container { max-width: 800px; margin: auto; padding: 1rem; }
+    .profile { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    button { padding: 0.5rem 1rem; background: #2d6cdf; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hommahaltuu</h1>
+    <p>Pienyrittäjien ja asiakkaiden markkinapaikka</p>
+  </header>
+
+  <div class="container">
+    <h2>Kirjaudu sisään</h2>
+    <input id="email" type="email" placeholder="Sähköpostiosoite" />
+    <button onclick="login()">Lähetä kirjautumislinkki</button>
+
+    <h2>Hyväksytyt osaajat</h2>
+    <div id="profiles"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://gnihryjremimweriovza.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaWhyeWpyZW1pbXdlcmlvdnphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NjA5OTIsImV4cCI6MjA3MDMzNjk5Mn0.D5tU7KtcgtO0Q6lnIm5TSBZuiieTAHV1lF3UohSVKiI";
+    const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) alert("Virhe: " + error.message);
+      else alert("Tarkista sähköpostisi kirjautumislinkin varalta!");
+    }
+
+    async function loadProfiles() {
+      let { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("approved", true);
+      if (error) {
+        document.getElementById("profiles").innerText = "Virhe: " + error.message;
+        return;
+      }
+      const container = document.getElementById("profiles");
+      container.innerHTML = "";
+      data.forEach(p => {
+        container.innerHTML += `
+          <div class="profile">
+            <h3>${p.name || ''}</h3>
+            <p>${p.description || 'Ei kuvausta'}</p>
+            ${p.stripe_link ? `<a href="${p.stripe_link}" target="_blank"><button>Tilaa / Maksa</button></a>` : ""}
+          </div>
+        `;
+      });
+    }
+
+    loadProfiles();
+  </script>
+</body>
+</html>
