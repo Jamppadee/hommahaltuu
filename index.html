@@ -2,66 +2,137 @@
 <html lang="fi">
 <head>
   <meta charset="UTF-8" />
-  <title>Hommahaltuu</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HommaHaltuu – Pienyrittäjien ja asiakkaiden markkinapaikka</title>
+  <meta name="description" content="Löydä ja palkkaa pienyrittäjiä suoraan. Profiilit, haku ja turvalliset maksulinkit." />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header { background: #2d6cdf; color: white; padding: 1rem; text-align: center; }
-    .container { max-width: 800px; margin: auto; padding: 1rem; }
-    .profile { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
-    button { padding: 0.5rem 1rem; background: #2d6cdf; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    html, body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans'; }
+    .chip { display:inline-flex; align-items:center; gap:.25rem; padding:.25rem .6rem; border-radius:999px; background:#f1f5f9; font-size:.75rem; color:#334155; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.6rem 1rem; border-radius:1rem; font-weight:600; transition:transform .08s ease, box-shadow .2s ease; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background:#2563eb; color:#fff; box-shadow: 0 8px 20px rgba(37,99,235,.25); }
+    .btn-primary:hover { filter:brightness(1.05); }
+    .btn-outline { border:1px solid #cbd5e1; color:#0f172a; background:#fff; }
+    .btn-outline:hover { background:#f8fafc; }
+    .input { width:100%; border:1px solid #cbd5e1; border-radius:.75rem; padding:.6rem .9rem; outline:none; background:#fff; }
+    .input:focus { box-shadow:0 0 0 4px rgba(37,99,235,.15); border-color:#94a3b8; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; }
+    .shadow-soft { box-shadow: 0 10px 35px rgba(2,6,23,.08); }
   </style>
 </head>
-<body>
-  <header>
-    <h1>Hommahaltuu</h1>
-    <p>Pienyrittäjien ja asiakkaiden markkinapaikka</p>
+
+<body class="bg-slate-50 text-slate-900">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="#home" class="font-extrabold text-xl tracking-tight hover:text-blue-700">HommaHaltuu</a>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#home" class="hover:text-blue-700">Etusivu</a>
+        <a href="#search" class="hover:text-blue-700">Haku</a>
+        <a href="#account" class="hover:text-blue-700">Tilini</a>
+        <a href="#admin" id="navAdmin" class="hover:text-blue-700 hidden">Admin</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-outline" id="btnLogin" aria-label="Kirjaudu">Kirjaudu</button>
+        <button class="btn btn-primary" id="btnLogout" style="display:none" aria-label="Kirjaudu ulos">Kirjaudu ulos</button>
+      </div>
+    </div>
   </header>
 
-  <div class="container">
-    <h2>Kirjaudu sisään</h2>
-    <input id="email" type="email" placeholder="Sähköpostiosoite" />
-    <button onclick="login()">Lähetä kirjautumislinkki</button>
+  <!-- Hero -->
+  <section id="home" class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-blue-50 to-transparent pointer-events-none"></div>
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-10">
+      <div class="grid md:grid-cols-2 gap-10 items-center">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight">
+            HommaHaltuu – <span class="text-blue-700">Pienyrittäjien ja asiakkaiden markkinapaikka</span>
+          </h1>
+          <p class="mt-4 text-slate-700 text-lg">Löydä luotettava osaaja. Vertaile hintoja, lue arvosteluja ja osta turvallisesti maksulinkin kautta.</p>
 
-    <h2>Hyväksytyt osaajat</h2>
-    <div id="profiles"></div>
-  </div>
+          <div class="mt-6 card p-3 shadow-soft">
+            <form id="heroSearch" class="grid sm:grid-cols-5 gap-3">
+              <input class="input sm:col-span-2" name="q" placeholder="Esim. valokuvaaja" />
+              <input class="input sm:col-span-1" name="city" placeholder="Paikkakunta" />
+              <select class="input sm:col-span-1" name="category">
+                <option value="">Kaikki alat</option>
+                <option>Valokuvaus</option>
+                <option>Graafinen suunnittelu</option>
+                <option>Verkkosivut</option>
+                <option>Kääntäminen</option>
+                <option>Kirjanpito</option>
+              </select>
+              <button class="btn btn-primary sm:col-span-1" type="submit">Hae</button>
+            </form>
+            <p class="mt-2 text-sm text-slate-600">💡 Vapaateksti toimii: “edullinen valokuvaaja Espoossa syyskuulle”.</p>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2 text-sm">
+            <span class="chip">✔ Turvallinen maksu</span>
+            <span class="chip">✔ Arvostelut</span>
+            <span class="chip">✔ Hyväksyntä ennen julkaisua</span>
+          </div>
+        </div>
+
+        <div class="md:pl-8">
+          <div class="card p-4 shadow-soft">
+            <img class="rounded-2xl w-full aspect-video object-cover" src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop" alt="Freelancer työskentelee kannettavalla"/>
+            <div class="mt-3 text-xs text-slate-600">*Kuvitus.*</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Esimerkkiosaajat näkyvät heti etusivulla -->
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">Selaa osaajia</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="featuredExperts"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="py-10 text-center text-sm text-slate-600">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <p>© <span id="year"></span> HommaHaltuu. Kaikki oikeudet pidätetään.</p>
+      <div class="mt-2">Käyttöehdot · Tietosuoja</div>
+    </div>
+  </footer>
 
   <script>
-    const SUPABASE_URL = "https://gnihryjremimweriovza.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaWhyeWpyZW1pbXdlcmlvdnphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NjA5OTIsImV4cCI6MjA3MDMzNjk5Mn0.D5tU7KtcgtO0Q6lnIm5TSBZuiieTAHV1lF3UohSVKiI";
-    const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-    async function login() {
-      const email = document.getElementById("email").value;
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) alert("Virhe: " + error.message);
-      else alert("Tarkista sähköpostisi kirjautumislinkin varalta!");
-    }
+    const demoProfiles = [
+      {name:"Anna Virtanen", title:"Valokuvaaja", city:"Helsinki", price:80, rating:4.8, reviews:32, about:"Hääkuvat, potretit ja tapahtumat.", tags:["Hääkuvat","Potretit"], image_url:"https://randomuser.me/api/portraits/women/44.jpg"},
+      {name:"Mikko Laine", title:"Graafinen suunnittelija", city:"Espoo", price:65, rating:4.6, reviews:21, about:"Logot, brändi-ilmeet ja esitteet.", tags:["Logo","Brändi"], image_url:"https://randomuser.me/api/portraits/men/34.jpg"},
+      {name:"Sari Korhonen", title:"Web-kehittäjä", city:"Tampere", price:90, rating:4.9, reviews:40, about:"Modernit ja responsiiviset verkkosivut.", tags:["WordPress","React"], image_url:"https://randomuser.me/api/portraits/women/68.jpg"},
+      {name:"Jari Niemi", title:"Kääntäjä (EN-FI)", city:"Turku", price:50, rating:4.7, reviews:15, about:"Käännökset ja oikoluvut.", tags:["Englanti","Suomi"], image_url:"https://randomuser.me/api/portraits/men/28.jpg"},
+      {name:"Laura Mäkelä", title:"Kirjanpitäjä", city:"Oulu", price:70, rating:4.5, reviews:18, about:"Pienyritysten taloushallinto.", tags:["Kirjanpito","ALV"], image_url:"https://randomuser.me/api/portraits/women/12.jpg"},
+      {name:"Antti Räsänen", title:"Videokuvaaja", city:"Jyväskylä", price:95, rating:4.9, reviews:22, about:"Mainos- ja tapahtumavideot.", tags:["Video","Drone"], image_url:"https://randomuser.me/api/portraits/men/45.jpg"},
+      {name:"Marja Saarinen", title:"Kuvittaja", city:"Kuopio", price:60, rating:4.8, reviews:19, about:"Digitaaliset ja painetut kuvitukset.", tags:["Illustrator","Julkaisut"], image_url:"https://randomuser.me/api/portraits/women/25.jpg"},
+      {name:"Pekka Koskinen", title:"IT-konsultti", city:"Lahti", price:120, rating:5.0, reviews:12, about:"Pilvipalvelut ja tietoturva.", tags:["Azure","AWS"], image_url:"https://randomuser.me/api/portraits/men/54.jpg"},
+      {name:"Tiina Heikkilä", title:"Sisällöntuottaja", city:"Seinäjoki", price:55, rating:4.4, reviews:9, about:"Blogit ja sosiaalisen median sisällöt.", tags:["SEO","Copywriting"], image_url:"https://randomuser.me/api/portraits/women/50.jpg"},
+      {name:"Ville Salmi", title:"Sovelluskehittäjä", city:"Rovaniemi", price:110, rating:4.9, reviews:14, about:"iOS- ja Android-sovellukset.", tags:["Flutter","Swift"], image_url:"https://randomuser.me/api/portraits/men/70.jpg"},
+    ];
 
-    async function loadProfiles() {
-      let { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("approved", true);
-      if (error) {
-        document.getElementById("profiles").innerText = "Virhe: " + error.message;
-        return;
-      }
-      const container = document.getElementById("profiles");
-      container.innerHTML = "";
-      data.forEach(p => {
-        container.innerHTML += `
-          <div class="profile">
-            <h3>${p.name || ''}</h3>
-            <p>${p.description || 'Ei kuvausta'}</p>
-            ${p.stripe_link ? `<a href="${p.stripe_link}" target="_blank"><button>Tilaa / Maksa</button></a>` : ""}
+    const featured = document.getElementById("featuredExperts");
+    if(featured){
+      featured.innerHTML = demoProfiles.slice(0,9).map(p => `
+        <article class="card rounded-2xl overflow-hidden shadow-soft flex flex-col hover:shadow-xl transition">
+          <img src="${p.image_url}" alt="${p.name}" class="h-40 w-full object-cover"/>
+          <div class="p-4 flex flex-col gap-2">
+            <h3 class="font-semibold text-lg">${p.name}</h3>
+            <p class="text-slate-600 text-sm">${p.title} • ${p.city}</p>
+            <p class="text-sm text-slate-700">${p.about}</p>
+            <div class="flex flex-wrap gap-2 mt-2">${p.tags.map(t => `<span class='chip'>${t}</span>`).join('')}</div>
           </div>
-        `;
-      });
+        </article>`).join("");
     }
-
-    loadProfiles();
   </script>
 </body>
 </html>
